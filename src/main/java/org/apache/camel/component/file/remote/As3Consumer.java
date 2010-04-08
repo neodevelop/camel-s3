@@ -20,15 +20,21 @@ import java.util.List;
 
 import org.apache.camel.Processor;
 import org.apache.camel.component.file.GenericFile;
+import org.apache.camel.component.file.GenericFileConsumer;
+import org.apache.camel.component.file.GenericFileEndpoint;
+import org.apache.camel.component.file.GenericFileOperations;
 import org.apache.camel.util.FileUtil;
 import org.apache.camel.util.ObjectHelper;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.jets3t.service.model.S3Object;
 
-public class As3Consumer extends RemoteFileConsumer<S3Object> {
+public class As3Consumer extends GenericFileConsumer<S3Object> {
+	protected final transient Log log = LogFactory.getLog(getClass());
 	protected String endpointPath;
 
-	public As3Consumer(RemoteFileEndpoint<S3Object> endpoint,
-			Processor processor, RemoteFileOperations<S3Object> operations) {
+	public As3Consumer(GenericFileEndpoint<S3Object> endpoint,
+			Processor processor, GenericFileOperations<S3Object> operations) {
 		super(endpoint, processor, operations);
 		this.endpointPath = endpoint.getConfiguration().getDirectory();
 	}
@@ -49,7 +55,7 @@ public class As3Consumer extends RemoteFileConsumer<S3Object> {
 		List<S3Object> files = operations.listFiles(fileName);
 		for (S3Object file : files) {
 			if (file.getDataInputFile().isDirectory()) {
-				RemoteFile<S3Object> remote = asRemoteFile(fileName, file);
+				GenericFile<S3Object> remote = asRemoteFile(fileName, file);
 				if (endpoint.isRecursive() && isValidFile(remote, true)) {
 					// recursive scan and add the sub files and folders
 					// String directory = fileName + "/" + file.getName();
@@ -59,7 +65,7 @@ public class As3Consumer extends RemoteFileConsumer<S3Object> {
 				}
 				// } else if (file.isFile()) {
 			} else if (file.getDataInputFile().isFile()) {
-				RemoteFile<S3Object> remote = asRemoteFile(fileName, file);
+				GenericFile<S3Object> remote = asRemoteFile(fileName, file);
 				if (isValidFile(remote, false)) {
 					if (isInProgress(remote)) {
 						if (log.isTraceEnabled()) {
@@ -78,8 +84,8 @@ public class As3Consumer extends RemoteFileConsumer<S3Object> {
 		}
 	}
 
-	private RemoteFile<S3Object> asRemoteFile(String directory, S3Object file) {
-		RemoteFile<S3Object> answer = new RemoteFile<S3Object>();
+	private GenericFile<S3Object> asRemoteFile(String directory, S3Object file) {
+		GenericFile<S3Object> answer = new GenericFile<S3Object>();
 
 		answer.setEndpointPath(endpointPath);
 		answer.setFile(file);
@@ -94,8 +100,7 @@ public class As3Consumer extends RemoteFileConsumer<S3Object> {
 			// answer.setLastModified(file.getTimestamp().getTimeInMillis());
 			answer.setLastModified(file.getLastModifiedDate().getTime());
 		}
-		answer.setHostname(((RemoteFileConfiguration) endpoint
-				.getConfiguration()).getHost());
+		//answer.setHostname(((GenericFileConfiguration) endpoint.getConfiguration()).getHost());
 
 		// all ftp files is considered as relative
 		answer.setAbsolute(false);

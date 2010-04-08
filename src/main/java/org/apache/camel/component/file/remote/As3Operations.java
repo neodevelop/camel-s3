@@ -30,21 +30,23 @@ import org.apache.camel.Exchange;
 import org.apache.camel.InvalidPayloadException;
 import org.apache.camel.component.file.FileComponent;
 import org.apache.camel.component.file.GenericFile;
+import org.apache.camel.component.file.GenericFileConfiguration;
 import org.apache.camel.component.file.GenericFileEndpoint;
 import org.apache.camel.component.file.GenericFileExist;
 import org.apache.camel.component.file.GenericFileOperationFailedException;
+import org.apache.camel.component.file.GenericFileOperations;
 import org.apache.camel.util.FileUtil;
 import org.apache.camel.util.ObjectHelper;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jets3t.service.model.S3Object;
 
-public class As3Operations implements RemoteFileOperations<S3Object> {
+public class As3Operations implements GenericFileOperations<S3Object> {
     
     protected final transient Log log = LogFactory.getLog(getClass());
     //protected final FTPClient client;
     //protected final FTPClientConfig clientConfig;
-    protected RemoteFileEndpoint<S3Object> endpoint;
+    protected GenericFileEndpoint<S3Object> endpoint;
 
     /*public As3Operations(FTPClient client, FTPClientConfig clientConfig) {
         this.client = client;
@@ -52,18 +54,18 @@ public class As3Operations implements RemoteFileOperations<S3Object> {
     }*/
 
     public void setEndpoint(GenericFileEndpoint<S3Object> endpoint) {
-        this.endpoint = (RemoteFileEndpoint<S3Object>) endpoint;
+        this.endpoint = (GenericFileEndpoint<S3Object>) endpoint;
     }
 
-    public boolean connect(RemoteFileConfiguration configuration) throws GenericFileOperationFailedException {
+    public boolean connect(GenericFileConfiguration configuration) throws GenericFileOperationFailedException {
         if (log.isTraceEnabled()) {
             //log.trace("Connecting using FTPClient: " + client);
         	log.trace("Connecting using FTPClient: ");
         }
 
-        String host = configuration.getHost();
+        /*String host = configuration.getHost();
         int port = configuration.getPort();
-        String username = configuration.getUsername();
+        String username = configuration.getUsername();*/
 
         /*if (clientConfig != null) {
             log.trace("Configuring FTPClient with config: " + clientConfig);
@@ -71,7 +73,7 @@ public class As3Operations implements RemoteFileOperations<S3Object> {
         }*/
 
         if (log.isTraceEnabled()) {
-            log.trace("Connecting to " + configuration.remoteServerInformation());
+            //log.trace("Connecting to " + configuration.remoteServerInformation());
         }
 
         boolean connected = false;
@@ -80,7 +82,7 @@ public class As3Operations implements RemoteFileOperations<S3Object> {
         while (!connected) {
             try {
                 if (log.isTraceEnabled() && attempt > 0) {
-                    log.trace("Reconnect attempt #" + attempt + " connecting to + " + configuration.remoteServerInformation());
+                    //log.trace("Reconnect attempt #" + attempt + " connecting to + " + configuration.remoteServerInformation());
                 }
                 //client.connect(host, port);
                 // must check reply code if we are connected
@@ -105,8 +107,8 @@ public class As3Operations implements RemoteFileOperations<S3Object> {
                     //log.trace("Cannot connect due: " + failed.getMessage());
                 }
                 attempt++;
-                if (attempt > endpoint.getMaximumReconnectAttempts()) {
-                    //throw failed;
+                /*if (attempt > endpoint.getMaximumReconnectAttempts()) {
+                    throw failed;
                 }
                 if (endpoint.getReconnectDelay() > 0) {
                     try {
@@ -114,35 +116,35 @@ public class As3Operations implements RemoteFileOperations<S3Object> {
                     } catch (InterruptedException ie) {
                         // ignore
                     }
-                }
+                }*/
             }
         }
 
         // must enter passive mode directly after connect
-        if (configuration.isPassiveMode()) {
+        /*if (configuration.isPassiveMode()) {
             log.trace("Using passive mode connections");
-            //client.enterLocalPassiveMode();
-        }
+            client.enterLocalPassiveMode();
+        }*/
 
         try {
             boolean login = false;
-            if (username != null) {
+            /*if (username != null) {
                 if (log.isTraceEnabled()) {
                     log.trace("Attempting to login user: " + username + " using password: " + configuration.getPassword());
                 }
-                //login = client.login(username, configuration.getPassword());
+                login = client.login(username, configuration.getPassword());
             } else {
                 log.trace("Attempting to login anonymous");
-                //login = client.login("anonymous", null);
+                login = client.login("anonymous", null);
             }
             if (log.isTraceEnabled()) {
                 log.trace("User " + (username != null ? username : "anonymous") + " logged in: " + login);
             }
             if (!login) {
-                //throw new GenericFileOperationFailedException(client.getReplyCode(), client.getReplyString());
+                throw new GenericFileOperationFailedException(client.getReplyCode(), client.getReplyString());
             }
-            //client.setFileType(configuration.isBinary() ? FTPClient.BINARY_FILE_TYPE : FTPClient.ASCII_FILE_TYPE);
-        //} catch (IOException e) {
+            client.setFileType(configuration.isBinary() ? FTPClient.BINARY_FILE_TYPE : FTPClient.ASCII_FILE_TYPE);
+        } catch (IOException e) {*/
         } catch (Exception e) {
             //throw new GenericFileOperationFailedException(client.getReplyCode(), client.getReplyString(), e.getMessage(), e);
         }

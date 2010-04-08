@@ -16,23 +16,8 @@
  */
 package org.apache.camel.component.file.remote;
 
-import java.net.URI;
+import org.apache.camel.component.file.GenericFileConfiguration;
 
-public class As3Configuration extends RemoteFileConfiguration {
-
-    public static final int DEFAULT_FTP_PORT = 21;
-
-    public As3Configuration() {
-        setProtocol("ftp");
-    }
-
-    public As3Configuration(URI uri) {
-        super(uri);
-    }
-
-    @Override
-    protected void setDefaultPort() {
-        setPort(DEFAULT_FTP_PORT);
-    }
+public class As3Configuration extends GenericFileConfiguration {
 
 }

@@ -18,35 +18,29 @@ package org.apache.camel.component.file.remote;
 
 import java.util.Map;
 
-import org.apache.camel.FailedToCreateConsumerException;
+import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
+import org.apache.camel.component.file.GenericFile;
+import org.apache.camel.component.file.GenericFileComponent;
+import org.apache.camel.component.file.GenericFileConfiguration;
+import org.apache.camel.component.file.GenericFileConsumer;
+import org.apache.camel.component.file.GenericFileEndpoint;
+import org.apache.camel.component.file.GenericFileOperations;
 import org.apache.camel.component.file.GenericFileProducer;
 import org.jets3t.service.model.S3Object;
 
-public class As3Endpoint<T extends S3Object> extends
-		RemoteFileEndpoint<S3Object> {
+public class As3Endpoint<T extends S3Object> extends GenericFileEndpoint<S3Object> {
+
+	private GenericFileConfiguration configuration;
 
 	public As3Endpoint() {
+		super();
 	}
 
-	public As3Endpoint(String uri, RemoteFileComponent<S3Object> component,
-			RemoteFileConfiguration configuration) {
-		super(uri, component, configuration);
-	}
-
-	@Override
-	protected RemoteFileConsumer<S3Object> buildConsumer(Processor processor) {
-		try {
-            return new As3Consumer(this, processor, createRemoteFileOperations());
-        } catch (Exception e) {
-            throw new FailedToCreateConsumerException(this, e);
-        }
-	}
-
-	@Override
-	protected GenericFileProducer<S3Object> buildProducer() {
-		// TODO Auto-generated method stub
-		return null;
+	public As3Endpoint(String uri, GenericFileComponent<S3Object> component,
+			GenericFileConfiguration configuration) {
+		super(uri, component);
+		this.configuration = configuration;
 	}
 
 	@Override
@@ -55,7 +49,7 @@ public class As3Endpoint<T extends S3Object> extends
 		return null;
 	}
 	
-	protected RemoteFileOperations<S3Object> createRemoteFileOperations() throws Exception {
+	protected GenericFileOperations<S3Object> createRemoteFileOperations() throws Exception {
         /*
         // configure ftp client
         FTPClient client = ftpClient;
@@ -97,4 +91,35 @@ public class As3Endpoint<T extends S3Object> extends
     void setFtpClientConfigParameters(Map<String, Object> ftpClientConfigParameters) {
         //this.ftpClientConfigParameters = ftpClientConfigParameters;
     }
+
+	@Override
+	public GenericFileConsumer<S3Object> createConsumer(Processor arg0)
+			throws Exception {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Exchange createExchange(GenericFile<S3Object> arg0) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public GenericFileProducer<S3Object> createProducer() throws Exception {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public char getFileSeparator() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public boolean isAbsolute(String arg0) {
+		// TODO Auto-generated method stub
+		return false;
+	}
 }

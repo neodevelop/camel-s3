@@ -16,15 +16,15 @@
  */
 package org.apache.camel.component.file.remote;
 
-import java.net.URI;
 import java.util.Map;
 
 import org.apache.camel.CamelContext;
+import org.apache.camel.component.file.GenericFileComponent;
 import org.apache.camel.component.file.GenericFileEndpoint;
 import org.apache.camel.util.IntrospectionSupport;
 import org.jets3t.service.model.S3Object;
 
-public class As3Component extends RemoteFileComponent<S3Object> {
+public class As3Component extends GenericFileComponent<S3Object> {
 
 	public As3Component() {
 	}
@@ -44,7 +44,8 @@ public class As3Component extends RemoteFileComponent<S3Object> {
 
         // lets make sure we create a new configuration as each endpoint can customize its own version
         // must pass on baseUri to the configuration (see above)
-        As3Configuration config = new As3Configuration(new URI(baseUri));
+        //As3Configuration config = new As3Configuration(new URI(baseUri));
+		As3Configuration config = new As3Configuration();
 
         As3Endpoint<S3Object> answer = new As3Endpoint<S3Object>(uri, this, config);
         extractAndSetFtpClientConfigParameters(parameters, answer);
