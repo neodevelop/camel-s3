@@ -40,49 +40,92 @@ public class As3Consumer extends GenericFileConsumer<S3Object> {
 	}
 
 	@Override
-	protected void pollDirectory(String fileName,
-			List<GenericFile<S3Object>> fileList) {
-		if (fileName == null) {
-			return;
-		}
+	protected boolean pollDirectory(String fileName, List<GenericFile<S3Object>> fileList) {
+        // must remember current dir so we stay in that directory after the poll
+        String currentDir = operations.getCurrentDirectory();
 
-		// remove trailing /
-		fileName = FileUtil.stripTrailingSeparator(fileName);
+        // strip trailing slash
+        fileName = FileUtil.stripTrailingSeparator(fileName);
 
-		if (log.isTraceEnabled()) {
-			log.trace("Polling directory: " + fileName);
-		}
-		List<S3Object> files = operations.listFiles(fileName);
-		for (S3Object file : files) {
-			if (file.getDataInputFile().isDirectory()) {
-				GenericFile<S3Object> remote = asRemoteFile(fileName, file);
-				if (endpoint.isRecursive() && isValidFile(remote, true)) {
-					// recursive scan and add the sub files and folders
-					// String directory = fileName + "/" + file.getName();
-					String directory = fileName + "/"
-							+ file.getDataInputFile().getName();
-					pollDirectory(directory, fileList);
-				}
-				// } else if (file.isFile()) {
-			} else if (file.getDataInputFile().isFile()) {
-				GenericFile<S3Object> remote = asRemoteFile(fileName, file);
-				if (isValidFile(remote, false)) {
-					if (isInProgress(remote)) {
-						if (log.isTraceEnabled()) {
-							log
-									.trace("Skipping as file is already in progress: "
-											+ remote.getFileName());
-						}
-					} else {
-						// matched file so add
-						fileList.add(remote);
-					}
-				}
-			} else {
-				log.debug("Ignoring unsupported remote file type: " + file);
-			}
-		}
-	}
+        boolean answer = doPollDirectory(fileName, null, fileList);
+        operations.changeCurrentDirectory(currentDir);
+
+        return answer;
+    }
+	
+	protected boolean pollSubDirectory(String absolutePath, String dirName, List<GenericFile<S3Object>> fileList) {
+        boolean answer = doPollDirectory(absolutePath, dirName, fileList);
+        // change back to parent directory when finished polling sub directory
+        operations.changeToParentDirectory();
+        return answer;
+    }
+	
+	protected boolean doPollDirectory(String absolutePath, String dirName, List<GenericFile<S3Object>> fileList) {
+        if (log.isTraceEnabled()) {
+            log.trace("doPollDirectory from absolutePath: " + absolutePath + ", dirName: " + dirName);
+        }
+
+        // remove trailing /
+        dirName = FileUtil.stripTrailingSeparator(dirName);
+        String dir = ObjectHelper.isNotEmpty(dirName) ? dirName : absolutePath;
+
+        // change into directory (to ensure most FTP servers can list files)
+        operations.changeCurrentDirectory(dir);
+
+        if (log.isTraceEnabled()) {
+            log.trace("Polling directory: " + dir);
+        }
+        List<S3Object> files = operations.listFiles();
+        if (files == null || files.isEmpty()) {
+            // no files in this directory to poll
+            if (log.isTraceEnabled()) {
+                log.trace("No files found in directory: " + dir);
+            }
+            return true;
+        } else {
+            // we found some files
+            if (log.isTraceEnabled()) {
+                log.trace("Found " + files.size() + " in directory: " + dir);
+            }
+        }
+
+        for (S3Object file : files) {
+
+            // check if we can continue polling in files
+            if (!canPollMoreFiles(fileList)) {
+                return false;
+            }
+
+            if (file.isDirectoryPlaceholder()) {
+            	GenericFile<S3Object> remote = asRemoteFile(absolutePath, file);
+                if (endpoint.isRecursive() && isValidFile(remote, true)) {
+                    // recursive scan and add the sub files and folders
+                    String subDirectory = file.getName();
+                    String path = absolutePath + "/" + subDirectory;
+                    boolean canPollMore = pollSubDirectory(path, subDirectory, fileList);
+                    if (!canPollMore) {
+                        return false;
+                    }
+                }
+            } else if (file.getDataInputFile().isFile()) {
+            	GenericFile<S3Object> remote = asRemoteFile(absolutePath, file);
+                if (isValidFile(remote, false)) {
+                    if (isInProgress(remote)) {
+                        if (log.isTraceEnabled()) {
+                            log.trace("Skipping as file is already in progress: " + remote.getFileName());
+                        }
+                    } else {
+                        // matched file so add
+                        fileList.add(remote);
+                    }
+                }
+            } else {
+                log.debug("Ignoring unsupported remote file type: " + file);
+            }
+        }
+
+        return true;
+    }
 
 	private GenericFile<S3Object> asRemoteFile(String directory, S3Object file) {
 		GenericFile<S3Object> answer = new GenericFile<S3Object>();

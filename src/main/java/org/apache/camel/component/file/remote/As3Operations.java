@@ -488,5 +488,11 @@ public class As3Operations implements GenericFileOperations<S3Object> {
 
         return success;
     }
+
+	public void changeToParentDirectory()
+			throws GenericFileOperationFailedException {
+		// TODO Auto-generated method stub
+		
+	}
     
 }
